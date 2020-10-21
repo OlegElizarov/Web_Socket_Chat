@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>WebSocket</title>
+</head>
+<style>
+    #dialog {
+        overflow-y: scroll;
+        height: 100px;
+        border: 2px indigo;
+    }
+</style>
+<body>
+<div id="dialog">
+    <p id="output"></p>
+</div>
+<br>
+<div>
+    <label for="user">Your ID</label>
+    <input type="text" id="user" name="user">
+    <br>
+
+    <label for="receiver">Friend ID</label>
+    <input type="text" id="receiver" name="user">
+    <br>
+
+    <label for="mes">Input your message</label><br>
+    <input type="text" id="mes" name="message">
+    <button onclick="postData('http://localhost:8080/send')"
+            type="submit" class="btn">ASK!
+    </button>
+</div>
+
+
+<script>
+    var loc = window.location;
+    var uri = 'ws:';
+
+    if (loc.protocol === 'https:') {
+        uri = 'wss:';
+    }
+    uri += '//' + loc.host;
+    uri += loc.pathname + 'ws';
+
+    ws = new WebSocket(uri)
+
+    ws.onopen = function () {
+        console.log('Connected')
+    }
+
+    ws.onmessage = function (evt) {
+        if (evt.data === "") {
+            return
+        }
+        var dial = document.getElementById('dialog');
+        // out.innerHTML += 'Your homie: ' + evt.data + '<br>';
+        var NewMessage = document.createElement("p");
+        NewMessage.append('Your homie: ' + evt.data);
+        dial.append(NewMessage);
+        dial.scrollTop = dial.scrollHeight;
+
+    }
+
+    setInterval(function () {
+        ws.send(document.getElementById('user').value + " " + document.getElementById('receiver').value);
+    }, 3000);
+</script>
+
+<script>
+    async function postData(url = '', data) {
+        var mess = document.getElementById('mes').value //input message
+        document.getElementById('mes').value = ''
+        data = {
+            message_line: mess,
+            sender: parseInt(document.getElementById('user').value),
+            receiver: parseInt(document.getElementById('receiver').value)
+        }
+        const response = await fetch(url, {
+            method: 'POST', // *GET, POST, PUT, DELETE, etc.
+            mode: 'cors', // no-cors, *cors, same-origin
+            cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+            credentials: 'same-origin', // include, *same-origin, omit
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            redirect: 'follow', // manual, *follow, error
+            referrerPolicy: 'no-referrer', // no-referrer, *client
+            body: JSON.stringify(data) // body data type must match "Content-Type" header
+        });
+        // var out = document.getElementById('output');
+        // out.innerHTML += 'You: ' + mess + '<br>'; //update message history
+        var dial = document.getElementById('dialog');
+        const NewMessage = document.createElement("p");
+        NewMessage.append(`You: ${mess}`)
+        dial.append(NewMessage);
+        dial.scrollTop = dial.scrollHeight;
+        return await response.json(); // parses JSON response into native JavaScript objects
+    }
+</script>
+</body>
+
+</html>
